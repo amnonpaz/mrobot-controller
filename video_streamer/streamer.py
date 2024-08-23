@@ -4,72 +4,82 @@ gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
 from video_streamer.config import Config
 
-# Set up logging
-
 class VideoStreamer:
     def __init__(self, config: Config):
-
         self.logger = logging.getLogger(self.__class__.__name__)
 
         # Initialize GStreamer
         Gst.init(None)
         self.logger.debug('GStreamer initialized')
 
-        # Create and set up the pipeline
-        self.pipeline = self.setup_pipeline(config)
+        self.create_pipeline()
+        self.create_elements(config)
+        self.add_elements()
+        self.link_elements()
+        self.create_bus()
 
-        # Create a bus to get messages from the GStreamer pipeline
+        self.loop = GLib.MainLoop()
+
+
+    def create_pipeline(self):
+        self.pipeline = Gst.Pipeline.new('video-stream')
+        if not self.pipeline:
+            self.logger.error('Failed to create GStreamer pipeline')
+            raise Exception('Failed to create GStreamer pipeline')
+        self.logger.debug('Pipeline created')
+
+
+    def create_elements(self, config: Config):
+        self.elements = {}
+        self.elements['source'] = self.create_element('v4l2src', 'source',
+                                                       {'device': config.device})
+
+        self.elements['capsfilter'] = self.create_element('capsfilter', 'source-capsfilter')
+        self.set_caps(self.elements['capsfilter'], f'video/x-h264,width={config.width},height={config.height}')
+
+        self.elements['h264parse'] = self.create_element('h264parse', 'parser')
+        self.elements['rtph264pay'] = self.create_element('rtph264pay', 'payloader')
+        self.elements['udpsink'] = self.create_element('udpsink', 'sink', 
+                                                       {'host': config.host, 'port': config.port})
+
+
+    def add_elements(self):
+        self.logger.debug('Adding elements to pipeline')
+        keys_iter = iter(self.elements)
+        try:
+            while True:
+                element_key = next(keys_iter)
+                element = self.elements[element_key]
+                self.logger.debug(f'- Adding {element.get_name()} to pipeline')
+                self.pipeline.add(element)
+        except StopIteration:
+            pass
+
+
+    def link_elements(self):
+        self.logger.debug('Linking elements')
+        keys_iter = iter(self.elements)
+        prev = self.elements[next(keys_iter)]
+        try:
+            while True:
+                element_key = next(keys_iter)
+                current = self.elements[element_key]
+                self.logger.debug(f' - {prev.get_name()} -> {current.get_name()}')
+                if not prev.link(current):
+                    msg = f'Failed to link {prev.get_name()} to {current.get_name()}'
+                    self.logger.error(msg)
+                    raise Exception(msg)
+                prev = current
+        except StopIteration:
+            pass
+
+
+    def create_bus(self):
         self.bus = self.pipeline.get_bus()
         self.bus.add_signal_watch()
         self.bus.connect('message', self.on_message)
         self.logger.debug('Bus connected to pipeline')
 
-        self.loop = GLib.MainLoop()
-
-    def setup_pipeline(self, config: Config):
-        # Create the pipeline
-        pipeline = Gst.Pipeline.new('video-stream')
-        if not pipeline:
-            self.logger.error('Failed to create GStreamer pipeline')
-            raise Exception('Failed to create GStreamer pipeline')
-        self.logger.debug('Pipeline created')
-
-        # Create elements
-        videosrc = self.create_element('v4l2src', 'source',
-                                       {'device': config.device})
-
-        capsfilter = self.create_element('capsfilter', 'source-capsfilter')
-        self.set_caps(capsfilter, f'video/x-h264,width={config.width},height={config.height}')
-
-        h264parse = self.create_element('h264parse', 'parser')
-        rtph264pay = self.create_element('rtph264pay', 'payloader')
-        udpsink = self.create_element('udpsink', 'sink', 
-                                      {'host': config.host, 'port': config.port})
-
-        # Add elements to the pipeline
-        pipeline.add(videosrc)
-        pipeline.add(capsfilter)
-        pipeline.add(h264parse)
-        pipeline.add(rtph264pay)
-        pipeline.add(udpsink)
-        self.logger.debug('Elements added to pipeline')
-
-        # Link the elements
-        if not videosrc.link(capsfilter):
-            self.logger.error('Failed to link videosrc to capsfilter')
-            raise Exception('Failed to link videosrc to capsfilter')
-        if not capsfilter.link(h264parse):
-            self.logger.error('Failed to link capsfilter to h264parse')
-            raise Exception('Failed to link capsfilter to h264parse')
-        if not h264parse.link(rtph264pay):
-            self.logger.error('Failed to link h264parse to rtph264pay')
-            raise Exception('Failed to link h264parse to rtph264pay')
-        if not rtph264pay.link(udpsink):
-            self.logger.error('Failed to link rtph264pay to udpsink')
-            raise Exception('Failed to link rtph264pay to udpsink')
-
-        self.logger.debug('Elements linked successfully')
-        return pipeline
 
     def create_element(self, element_type: str, element_name: str, props: dict = {}):
         element = Gst.ElementFactory.make(element_type, element_name)
@@ -82,10 +92,12 @@ class VideoStreamer:
             self.logger.debug(f'- {element_name}: Set property {key} to {props[key]}')
         return element
 
+
     def set_caps(self, element, caps_string: str):
         caps = Gst.Caps.from_string(caps_string)
         element.set_property('caps', caps)
         self.logger.debug(f'- {element.get_name()}: Set caps to {caps.to_string()}')
+
 
     def on_message(self, bus, message):
         res = True
@@ -108,6 +120,7 @@ class VideoStreamer:
                 self.logger.debug(f'Pipeline state changed from {old_state.value_nick} to {new_state.value_nick}')
         return res
 
+
     def start(self):
         # Start playing the pipeline
         self.pipeline.set_state(Gst.State.PLAYING)
@@ -118,6 +131,7 @@ class VideoStreamer:
             self.loop = self.loop.run()
         except KeyboardInterrupt:
             self.stop()
+
 
     def stop(self):
         # Clean up
