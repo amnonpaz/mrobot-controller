@@ -4,6 +4,7 @@ gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
 from video_streamer.config import Config
 
+
 class VideoStreamer:
     def __init__(self, config: Config):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -31,16 +32,16 @@ class VideoStreamer:
 
     def create_elements(self, config: Config):
         self.elements = {}
-        self.elements['source'] = self.create_element('v4l2src', 'source',
-                                                       {'device': config.device})
+        self.elements['source'] = self.gst_element_create('v4l2src', 'source',
+                                                          {'device': config.device})
 
-        self.elements['capsfilter'] = self.create_element('capsfilter', 'source-capsfilter')
-        self.set_caps(self.elements['capsfilter'], f'video/x-h264,width={config.width},height={config.height}')
+        self.elements['capsfilter'] = self.gst_element_create('capsfilter', 'source-capsfilter')
+        self.gst_element_set_caps(self.elements['capsfilter'], f'video/x-h264,width={config.width},height={config.height}')
 
-        self.elements['h264parse'] = self.create_element('h264parse', 'parser')
-        self.elements['rtph264pay'] = self.create_element('rtph264pay', 'payloader')
-        self.elements['udpsink'] = self.create_element('udpsink', 'sink', 
-                                                       {'host': config.host, 'port': config.port})
+        self.elements['h264parse'] = self.gst_element_create('h264parse', 'parser')
+        self.elements['rtph264pay'] = self.gst_element_create('rtph264pay', 'payloader')
+        self.elements['udpsink'] = self.gst_element_create('udpsink', 'sink', 
+                                                           {'host': config.host, 'port': config.port})
 
 
     def add_elements(self):
@@ -81,7 +82,7 @@ class VideoStreamer:
         self.logger.debug('Bus connected to pipeline')
 
 
-    def create_element(self, element_type: str, element_name: str, props: dict = {}):
+    def gst_element_create(self, element_type: str, element_name: str, props: dict = {}):
         element = Gst.ElementFactory.make(element_type, element_name)
         if not element:
             self.logger.error(f'Failed to create {element_type} element')
@@ -93,7 +94,7 @@ class VideoStreamer:
         return element
 
 
-    def set_caps(self, element, caps_string: str):
+    def gst_element_set_caps(self, element, caps_string: str):
         caps = Gst.Caps.from_string(caps_string)
         element.set_property('caps', caps)
         self.logger.debug(f'- {element.get_name()}: Set caps to {caps.to_string()}')
