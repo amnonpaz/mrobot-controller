@@ -1,0 +1,34 @@
+# Byte-compiled
+__pycache__/
+
+# Packages
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.wheel
+pip-wheel-metadata/
+
+# Installer logs
+pip-log.txt
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# JetBrains IDEs (PyCharm, IntelliJ IDEA)
+.idea/
+
+# JetBrains IDEs project files
+*.iml
+
+
+# Linux specific files
+*.swp
+.swo
