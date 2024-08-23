@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  video_streamer:
+    image: video_streamer:1.0
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../config/default.json:/app/config.json
+    ports:
+      - 6666:6666
+    devices:
+      - /dev/video0
+    restart: unless-stopped

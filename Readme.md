@@ -25,3 +25,8 @@ To run the application, use the following command:
 ```bash
 python main.py path/to/your/config.json
 ```
+
+Running with docker:
+```bash
+docker-compose -f docker/docker-compose.yml up
+```
