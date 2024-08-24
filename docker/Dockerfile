@@ -16,8 +16,10 @@ RUN apt-get update -y && apt-get install -y -qq \
     gir1.2-gstreamer-1.0 && \
     apt-get autoclean && apt-get autoremove &&  rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-COPY . /app/
-RUN pip install --no-cache-dir -r requirements.txt
+WORKDIR /tmp/app
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt && pip install . && \
+    mkdir /etc/video-streamer/ && cp config/default.json /etc/video-streamer/config.json && \
+    rm -rf /tmp/app
 
-CMD ["python", "main.py", "config.json"]
+CMD ["video-streamer", "/etc/video-streamer/config.json"]

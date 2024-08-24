@@ -12,7 +12,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'video_streamer=main:main',
+            'video-streamer=video_streamer.app:main',
         ],
     },
 )
