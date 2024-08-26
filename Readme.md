@@ -1,15 +1,12 @@
-# Video Streaming Application
+# mRobot Controller
 
-This is a Python application for streaming video using GStreamer. The application reads configuration from a JSON file, which defines video parameters and server settings. It is designed to be easily configurable and extendable.
+Python application for controlling the [Zero Bot Pro](https://hackaday.io/project/25092-zerobot-raspberry-pi-zero-fpv-robot)
 
 ## Features
 
 - **Video Streaming**: Streams video from a specified device using GStreamer.
 - **Custom Configuration**: Load configuration from a JSON file, including video and server settings.
-- **Error Handling**: Comprehensive error handling with logging.
-- **Command-Line Interface**: Pass the configuration file as a command-line argument.
-
-## Installation
+- **TBD**: WebSocket interface for controlling the motor, LEDs, and other peripherals
 
 ### Prerequisites
 
@@ -17,6 +14,15 @@ This is a Python application for streaming video using GStreamer. The applicatio
 - GStreamer
   With base, good and bad plugins packages
 - PyGObject
+
+## Installation
+
+```bash
+pip install --no-cache-dir -r requirements.txt
+pip install .
+```
+
+See [meta-mrobot Yocto layer](https://github.com/amnonpaz/meta-mrobot) for integrating with Yocto.
 
 ## Usage
 
