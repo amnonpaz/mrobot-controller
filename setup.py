@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="video_streamer",
+    name="mrobot-controller",
     version="0.1.0",
     description="A Python application for streaming v4l over RTP using GStreamer",
     author="Amnon Paz",
@@ -12,7 +12,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'video-streamer=video_streamer.app:main',
+            'mrobot-controller=mrobot-controller.app:main',
         ],
     },
 )
