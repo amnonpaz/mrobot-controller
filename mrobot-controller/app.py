@@ -1,7 +1,7 @@
 import argparse
 import logging
-from video_streamer.streamer import VideoStreamer
-from video_streamer.config import Config
+from video.streamer import VideoStreamer
+from config.config import Config
 
 logging.basicConfig(
         level=logging.DEBUG,
@@ -9,10 +9,12 @@ logging.basicConfig(
         datefmt='%d-%m-%Y %H:%M:%S'
         )
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Video Streaming Application")
     parser.add_argument('config', type=str, help='Path to configuration JSON file')
     return parser.parse_args()
+
 
 def main():
     logger = logging.getLogger('Main')
@@ -26,13 +28,13 @@ def main():
 
     try:
         # Initialize and start the VideoStreamer with the configuration
-        streamer = VideoStreamer(config)
+        streamer = VideoStreamer(config.device, config.width, config.height, config.host, config.port, config.test)
         logger.info("Starting video streaming...")
         streamer.start()
     except Exception as e:
         logger.critical(f"Failed to start video streaming: {e}")
         exit(1)
 
+
 if __name__ == "__main__":
     main()
-

@@ -48,6 +48,6 @@ class Config:
             self.logger.info(line)
 
     def __repr__(self):
-        return (f'Video:\n    Device: {self.device}\n    Width:  {self.width}\n    Height: {self.height}\n'
+        return (f'Video:\n    Device: {self.device}\n    Width:  {self.width}\n    Height: {self.height}\n    Test: {self.test}\n'
                 f'Server:\n    Host: {self.host}\n    Port: {self.port}')
 
