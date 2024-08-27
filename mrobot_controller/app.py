@@ -1,7 +1,7 @@
 import argparse
 import logging
-from video_streamer import VideoStreamer
-from app_config import AppConfig
+from .video_streamer import VideoStreamer
+from .app_config import AppConfig
 
 logging.basicConfig(
         level=logging.DEBUG,
@@ -19,7 +19,7 @@ def parse_arguments():
 def main():
     logger = logging.getLogger('Main')
 
-    logger.info('V4L to RTP streamer')
+    logger.info('mRobot Controller')
     # Parse command-line arguments
     args = parse_arguments()
 

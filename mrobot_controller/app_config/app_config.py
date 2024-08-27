@@ -3,8 +3,8 @@ import logging
 
 
 class AppConfig:
-    def __init__(self, config_file):
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, config_file: str):
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         # Default values
         self.device = "/dev/video0"

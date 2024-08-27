@@ -29,7 +29,7 @@ See [meta-mrobot Yocto layer](https://github.com/amnonpaz/meta-mrobot) for integ
 To run the application, use the following command:
 
 ```bash
-python main.py path/to/your/config.json
+python -m mrobot_controller.app config/default.json
 ```
 
 Running with docker:

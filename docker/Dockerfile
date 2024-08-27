@@ -10,6 +10,7 @@ RUN apt-get update -y && apt-get install -y -qq \
     gstreamer1.0-plugins-base \
     gstreamer1.0-plugins-good \
     gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
     libgstreamer1.0-dev \
     libcairo2-dev \
     libgirepository1.0-dev \
@@ -18,8 +19,8 @@ RUN apt-get update -y && apt-get install -y -qq \
 
 WORKDIR /tmp/app
 COPY . .
-RUN pip install --no-cache-dir -r requirements.txt && pip install . && \
-    mkdir /etc/video-streamer/ && cp config/default.json /etc/video-streamer/config.json && \
-    rm -rf /tmp/app
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install . && mkdir /etc/mrobot-controller/ && cp config/default.json /etc/mrobot-controller/config.json
+RUN rm -rf /tmp/app
 
-CMD ["video-streamer", "/etc/video-streamer/config.json"]
+CMD ["mrobot-controller", "/etc/mrobot-controller/config.json"]
