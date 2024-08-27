@@ -1,6 +1,6 @@
 import argparse
 import logging
-from video.streamer import VideoStreamer
+from video_streamer import VideoStreamer
 from app_config import AppConfig
 
 logging.basicConfig(
