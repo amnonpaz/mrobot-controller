@@ -1,7 +1,7 @@
 import argparse
 import logging
 from video.streamer import VideoStreamer
-from config.config import Config
+from app_config import AppConfig
 
 logging.basicConfig(
         level=logging.DEBUG,
@@ -24,7 +24,7 @@ def main():
     args = parse_arguments()
 
     # Load configuration from JSON file
-    config = Config(args.config)
+    config = AppConfig(args.config)
 
     try:
         # Initialize and start the VideoStreamer with the configuration

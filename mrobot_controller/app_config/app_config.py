@@ -2,7 +2,7 @@ import json
 import logging
 
 
-class Config:
+class AppConfig:
     def __init__(self, config_file):
         self.logger = logging.getLogger(__name__)
 
