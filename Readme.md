@@ -14,10 +14,13 @@ Python application for controlling the [Zero Bot Pro](https://hackaday.io/projec
 
 ### Prerequisites
 
-- Python 3.6 or later
+- Python 3.6 or later, with:
+    - PyGObject
+    - websockets
+    - asyncio
+    - msgpack (for serializing/deserializing messages)
 - GStreamer
-  With base, good and bad plugins packages
-- PyGObject
+  With base, good, bad and ugly plugins packages
 
 ## Installation
 
@@ -28,7 +31,7 @@ pip install .
 
 See [meta-mrobot Yocto layer](https://github.com/amnonpaz/meta-mrobot) for integrating with Yocto.
 
-## Usage
+## Using the application
 
 To run the application, use the following command:
 
@@ -41,3 +44,43 @@ Running with docker:
 docker-compose -f docker/docker-compose.yml up
 ```
 
+## Communication
+Communication with the controller is done over websockets. The messages are serialized using [messagepack](https://msgpack.org/), which has an extensive support for various programming languages.
+The server receives commands and sends response on each command. These messages have these structures:
+
+**Command structure**:
+```json
+{
+	"command": string
+	"parameters": dict
+}
+```
+
+** Response structure**:
+```json
+{
+	"success": bool
+	"response": string
+}
+```
+
+### Start video command
+**Command structure**:
+```json
+{
+	"command": "video_start"
+	"parameters": {
+		"host": string,
+		"port": int
+	}
+}
+```
+
+### Stop video command
+**Command structure**:
+```json
+{
+	"command": "video_stop"
+	"parameters": {}
+}
+```
