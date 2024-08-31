@@ -24,6 +24,7 @@ class WebSocketServer:
             raise TypeError("handler must be an instance of MessageHandler")
 
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(logging.INFO)
 
         self.host = host
         self.port = port
@@ -63,18 +64,6 @@ class WebSocketServer:
                 await self.unregister(websocket)
 
     async def start(self):
-        server = await websockets.serve(self.serve, self.host, self.port)
+        server = await websockets.serve(self.serve, self.host, self.port, logger=self.logger)
         self.logger.info(f"Server started on ws://{self.host}:{self.port}")
         await server.wait_closed()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s',
-        datefmt='%d-%m-%Y %H:%M:%S'
-    )
-
-    handler = CatMessageHandler()
-    ws_server = WebSocketServer(message_handler=handler)
-    asyncio.run(ws_server.start())

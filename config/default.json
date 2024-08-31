@@ -4,8 +4,7 @@
         "height": 480,
         "test": true
     },
-    "server": {
-        "host": "127.0.0.1",
-        "port": 6666
+    "app-server": {
+        "port": 8765
     }
 }

@@ -6,14 +6,19 @@ class AppConfig:
     def __init__(self, config_file: str):
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # Default values
-        self.device = "/dev/video0"
-        self.width = 1920
-        self.height = 1080
-
-        self.host = "localhost"
-        self.port = 5555
-        self.test = False
+        self.config = {
+            'video': {
+                'device': "/dev/video0",
+                'width': 1920,
+                'height': 1080,
+                'host': 'localhost',
+                'port': 5555,
+                'test': False
+            },
+            'app-server': {
+                'port': 8765
+            }
+        }
 
         self.load_config(config_file)
 
@@ -23,15 +28,14 @@ class AppConfig:
                 config_data = json.load(f)
 
                 video_config = config_data.get("video", {})
-                server_config = config_data.get("server", {})
+                server_config = config_data.get("app-server", {})
 
-                self.device = video_config.get("device", self.device)
-                self.width = video_config.get("width", self.width)
-                self.height = video_config.get("height", self.height)
-                self.test = video_config.get("test", self.test)
+                self.config['video']['device'] = video_config.get("device", self.config['video']['device'])
+                self.config['video']['width'] = video_config.get("width", self.config['video']['width'])
+                self.config['video']['height'] = video_config.get("height", self.config['video']['height'])
+                self.config['video']['test'] = video_config.get("test", self.config['video']['test'])
 
-                self.host = server_config.get("host", self.host)
-                self.port = server_config.get("port", self.port)
+                self.config['app-server']['port'] = server_config.get("port", self.config['app-server']['port'])
 
                 self.log_values()
 
@@ -42,6 +46,12 @@ class AppConfig:
         except Exception as e:
             self.logger.error(f"An error occurred while loading configuration: {e}. Using default settings.")
 
+    def get_video_config(self):
+        return self.config['video']
+
+    def get_app_server_config(self):
+        return self.config['app-server']
+
     def log_values(self):
         self.logger.info('Using configuration: ')
         for line in str(self).split('\n'):
@@ -49,5 +59,5 @@ class AppConfig:
 
     def __repr__(self):
         return (f'Video:\n    Device: {self.device}\n    Width:  {self.width}\n    Height: {self.height}\n    Test: {self.test}\n'
-                f'Server:\n    Host: {self.host}\n    Port: {self.port}')
+                f'Server:\n    Port: {self.port}')
 

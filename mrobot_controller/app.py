@@ -1,7 +1,7 @@
 import argparse
 import logging
+import asyncio
 from . import Controller
-from .video_streamer import VideoStreamer
 from .app_config import AppConfig
 
 logging.basicConfig(
@@ -27,15 +27,14 @@ def main():
     # Load configuration from JSON file
     config = AppConfig(args.config)
 
+    controller = Controller(config.get_app_server_config()['port'], config.get_video_config())
     try:
         # Initialize and start the VideoStreamer with the configuration
-        # streamer = VideoStreamer(config.device, config.width, config.height, config.host, config.port, config.test)
-        controller = Controller(config.port)
-        logger.info("Starting video streaming...")
-        controller.start()
-        # streamer.start()
+        logger.info("Starting controller...")
+        asyncio.run(controller.run())
     except Exception as e:
         logger.critical(f"Failed to start video streaming: {e}")
+        controller.stop()
         exit(1)
 
 

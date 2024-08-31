@@ -50,8 +50,7 @@ class VideoStreamer:
 
         self.elements['h264parse'] = self.gst_element_create('h264parse', 'parser')
         self.elements['rtph264pay'] = self.gst_element_create('rtph264pay', 'payloader')
-        self.elements['udpsink'] = self.gst_element_create('udpsink', 'sink', 
-                                                           {'host': host, 'port': port})
+        self.elements['udpsink'] = self.gst_element_create('udpsink', 'sink')
 
     def create_video_source(self, device: str, width: int, height: int):
         self.elements['source'] = self.gst_element_create('v4l2src', 'source',
@@ -157,18 +156,32 @@ class VideoStreamer:
 
         return res
 
-    def start(self):
+    def host_set(self, host: str, port: int):
+        self.pause()
+        self.logger.info(f'Streaming to server on {host}:{port}')
+        self.elements['udpsink'].emit('add', host, port)
+        self.play()
+
+    def host_remove(self):
+        self.pause()
+        self.logger.info('removing hosts')
+        self.elements['udpsink'].emit('clear')
+
+    async def start(self):
         # Start playing the pipeline
+        self.pause()
+        self.logger.info('Pipeline ready')
+        self.loop = self.loop.run()
+
+    def play(self):
+        self.logger.info('Pipeline state: PLAYING')
         self.pipeline.set_state(Gst.State.PLAYING)
-        self.logger.info('Pipeline started')
 
-        # Run the pipeline
-        try:
-            self.loop = self.loop.run()
-        except KeyboardInterrupt:
-            self.stop()
+    def pause(self):
+        self.logger.info('Pipeline state: PAUSED')
+        self.pipeline.set_state(Gst.State.PAUSED)
 
-    def stop(self):
+    async def stop(self):
         # Clean up
         self.pipeline.set_state(Gst.State.NULL)
         self.logger.info('Pipeline stopped')
