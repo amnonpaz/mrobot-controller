@@ -1,5 +1,6 @@
 import argparse
 import logging
+from . import Controller
 from .video_streamer import VideoStreamer
 from .app_config import AppConfig
 
@@ -28,9 +29,11 @@ def main():
 
     try:
         # Initialize and start the VideoStreamer with the configuration
-        streamer = VideoStreamer(config.device, config.width, config.height, config.host, config.port, config.test)
+        # streamer = VideoStreamer(config.device, config.width, config.height, config.host, config.port, config.test)
+        controller = Controller(config.port)
         logger.info("Starting video streaming...")
-        streamer.start()
+        controller.start()
+        # streamer.start()
     except Exception as e:
         logger.critical(f"Failed to start video streaming: {e}")
         exit(1)

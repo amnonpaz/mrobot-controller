@@ -27,7 +27,7 @@ class WebSocketServer:
 
         self.host = host
         self.port = port
-        self.client = None  # To track the single connected client
+        self.client = None
         self.message_handler = message_handler
 
     async def register(self, websocket):
@@ -50,7 +50,7 @@ class WebSocketServer:
         else:
             self.logger.warning("No client connected to send the message to")
 
-    async def handler_func(self, websocket, path):
+    async def serve(self, websocket, path):
         await self.register(websocket)
         if self.client is websocket:
             try:
@@ -63,7 +63,7 @@ class WebSocketServer:
                 await self.unregister(websocket)
 
     async def start(self):
-        server = await websockets.serve(self.handler_func, self.host, self.port)
+        server = await websockets.serve(self.serve, self.host, self.port)
         self.logger.info(f"Server started on ws://{self.host}:{self.port}")
         await server.wait_closed()
 
