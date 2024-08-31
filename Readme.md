@@ -1,12 +1,16 @@
 # mRobot Controller
 
-Python application for controlling the [Zero Bot Pro](https://hackaday.io/project/25092-zerobot-raspberry-pi-zero-fpv-robot)
+Python application for controlling the [Zero Bot Pro](https://hackaday.io/project/25092-zerobot-raspberry-pi-zero-fpv-robot) (Original software [here](https://github.com/CoretechR/ZeroBot))
 
 ## Features
 
-- **Video Streaming**: Streams video from a specified device using GStreamer.
 - **Custom Configuration**: Load configuration from a JSON file, including video and server settings.
-- **TBD**: WebSocket interface for controlling the motor, LEDs, and other peripherals
+- **Video Streaming**: Streams video from a specified device using GStreamer.
+- **WebSocket server**:
+	For controlling:
+    - Video stream start/stop
+	- Motors *TBD*
+	- LEDs *TBD*
 
 ### Prerequisites
 
@@ -36,3 +40,4 @@ Running with docker:
 ```bash
 docker-compose -f docker/docker-compose.yml up
 ```
+
