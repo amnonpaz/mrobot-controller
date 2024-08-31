@@ -1,8 +1,12 @@
 import asyncio
 import logging
 from .websocket import WebSocketServer, WebSocketMessageHandler
-from .deserializer import Deserializer
+from .serdes import deserialize, DeserializationError, serialize
 from .video_streamer import VideoStreamer
+
+
+class ControllerException(Exception):
+    pass
 
 
 class Controller(WebSocketMessageHandler):
@@ -16,7 +20,6 @@ class Controller(WebSocketMessageHandler):
                                             'localhost',
                                             video_config['port'],
                                             video_config['test'])
-        self.deserializer = Deserializer()
         self.event_loop = None
         self.tasks = None
 
@@ -26,24 +29,27 @@ class Controller(WebSocketMessageHandler):
         }
 
     def handle_message(self, message):
-        self.logger.info(f'received: {message}')
+        success = False
         try:
-            command, parameters = self.deserializer.deserialize(message)
-            try:
-                self.commands[command](parameters)
-            except KeyError as e:
-                self.logger.warning(f'No such command: {e}')
+            command, parameters = deserialize(message)
+            response = self.commands[command](parameters)
+            success = True
+        except KeyError as e:
+            self.logger.warning(f'Invalid command: {e}')
+            response = f'Invalid command: {e}'
+        except ControllerException as e:
+            self.logger.warning(f'Command failed: {e}')
+            response = str(e)
+        except DeserializationError as e:
+            self.logger.warning(f'received malformed message: {e}')
+            response = str(e)
 
-        except KeyError:
-            self.logger.warning('received malformed message')
+        return serialize({'success': success, 'response': response})
 
     async def run(self):
         self.logger.debug('Starting server')
 
         self.event_loop = asyncio.get_running_loop()
-
-        self.logger.debug('Server execution ends')
-
         self.tasks = await asyncio.gather(
             asyncio.to_thread(self.video_streamer.start),
             asyncio.create_task(self.websocket_server.start())
@@ -55,14 +61,18 @@ class Controller(WebSocketMessageHandler):
 
     def video_start(self, parameters):
         self.logger.info(f'Starting video')
+
         try:
             host = parameters['host']
             port = parameters['port']
         except KeyError as e:
             self.logger.warning(f'\"Start video\" parameters error: {e}')
-            return
+            raise ControllerException(f'Error starting video: {e}')
+
         self.video_streamer.host_set(host, port)
+        return f'Video stream to {host}:{port} started'
 
     def video_stop(self, _):
         self.logger.info(f'Stopping video')
         self.video_streamer.host_remove()
+        return 'Video stream stopped'

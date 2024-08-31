@@ -57,7 +57,8 @@ class WebSocketServer:
             try:
                 async for message in websocket:
                     self.logger.debug(f"Received message: {message}")
-                    await self.message_handler.handle_message(message)
+                    response = self.message_handler.handle_message(message)
+                    await websocket.send(response)
             except websockets.exceptions.ConnectionClosed as e:
                 self.logger.error(f"Connection closed: {websocket.remote_address} - {e}")
             finally:
