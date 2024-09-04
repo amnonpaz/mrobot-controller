@@ -5,6 +5,7 @@ Python application for controlling the [Zero Bot Pro](https://hackaday.io/projec
 ## Features
 
 - **Custom Configuration**: Load configuration from a JSON file, including video and server settings.
+- **Service pulishing**: For DNS-SD publishing of the service
 - **Video Streaming**: Streams video from a specified device using GStreamer.
 - **WebSocket server**:
 	For controlling:
