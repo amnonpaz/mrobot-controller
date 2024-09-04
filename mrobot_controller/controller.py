@@ -3,6 +3,7 @@ import logging
 from .websocket import WebSocketServer, WebSocketMessageHandler
 from .serdes import deserialize, DeserializationError, serialize
 from .video_streamer import VideoStreamer
+from .dns_sd import ServicePublisher
 
 
 class ControllerException(Exception):
@@ -20,6 +21,7 @@ class Controller(WebSocketMessageHandler):
                                             'localhost',
                                             video_config['port'],
                                             video_config['test'])
+        self.service_publisher = ServicePublisher('mrobot-server', video_config['port'])
         self.event_loop = None
         self.tasks = None
 
@@ -49,6 +51,8 @@ class Controller(WebSocketMessageHandler):
     async def run(self):
         self.logger.debug('Starting server')
 
+        self.service_publisher.publish()
+
         self.event_loop = asyncio.get_running_loop()
         self.tasks = await asyncio.gather(
             asyncio.to_thread(self.video_streamer.start),
@@ -56,8 +60,12 @@ class Controller(WebSocketMessageHandler):
         )
 
     def stop(self):
-        self.video_streamer.stop()
-        self.tasks.cancel()
+        if self.service_publisher:
+            self.service_publisher.unpublish()
+        if self.video_streamer:
+            self.video_streamer.stop()
+        if self.tasks:
+            self.tasks.cancel()
 
     def video_start(self, parameters):
         self.logger.info(f'Starting video')

@@ -3,3 +3,4 @@ websockets
 json
 asyncio
 msgpack
+zeroconf

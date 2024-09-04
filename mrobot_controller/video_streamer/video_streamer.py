@@ -181,7 +181,7 @@ class VideoStreamer:
         self.logger.info('Pipeline state: PAUSED')
         self.pipeline.set_state(Gst.State.PAUSED)
 
-    async def stop(self):
+    def stop(self):
         # Clean up
         self.pipeline.set_state(Gst.State.NULL)
         self.logger.info('Pipeline stopped')

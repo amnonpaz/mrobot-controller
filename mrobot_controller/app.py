@@ -33,7 +33,7 @@ def main():
         logger.info("Starting controller...")
         asyncio.run(controller.run())
     except Exception as e:
-        logger.critical(f"Failed to start video streaming: {e}")
+        logger.critical(f"Failed to start controller: {e}")
         controller.stop()
         exit(1)
 
