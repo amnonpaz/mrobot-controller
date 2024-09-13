@@ -2,9 +2,10 @@
     "video": {
         "width": 640,
         "height": 480,
+        "device": "/dev/video0",
         "test": true
     },
     "app-server": {
-        "port": 8765
+        "port": 8877
     }
 }
