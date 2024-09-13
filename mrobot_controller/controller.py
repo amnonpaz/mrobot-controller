@@ -14,14 +14,14 @@ class Controller(WebSocketMessageHandler):
     def __init__(self, port: int, video_config: dict):
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.websocket_server = WebSocketServer(self, host='localhost', port=port)
+        self.service_publisher = ServicePublisher('mrobot-server', port)
+        self.websocket_server = WebSocketServer(self, hosts=self.service_publisher.get_ips(), port=port)
         self.video_streamer = VideoStreamer(video_config['device'],
                                             video_config['width'],
                                             video_config['height'],
                                             'localhost',
                                             video_config['port'],
                                             video_config['test'])
-        self.service_publisher = ServicePublisher('mrobot-server', video_config['port'])
         self.event_loop = None
         self.tasks = None
 

@@ -19,14 +19,14 @@ class CatMessageHandler(WebSocketMessageHandler):
 
 
 class WebSocketServer:
-    def __init__(self, message_handler: WebSocketMessageHandler, host='localhost', port=8765):
+    def __init__(self, message_handler: WebSocketMessageHandler, hosts=['localhost'], port=8765):
         if not isinstance(message_handler, WebSocketMessageHandler):
             raise TypeError("handler must be an instance of MessageHandler")
 
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.INFO)
 
-        self.host = host
+        self.host = hosts
         self.port = port
         self.client = None
         self.message_handler = message_handler
