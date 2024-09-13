@@ -4,3 +4,4 @@ json
 asyncio
 msgpack
 zeroconf
+netifaces
