@@ -28,5 +28,7 @@ def deserialize(serialized_message):
         raise DeserializationError(f'Error during deserialization: {e}')
     except (ValueError, KeyError) as e:
         raise DeserializationError(f'Invalid message structure: {e}')
+    except TypeError as e:
+        raise DeserializationError(f'Invalid message type: {e}')
 
     return command, parameters
