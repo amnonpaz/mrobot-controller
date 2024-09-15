@@ -32,6 +32,7 @@ class Controller(WebSocketMessageHandler):
 
     def handle_message(self, message):
         success = False
+        command = 'unknown'
         try:
             command, parameters = deserialize(message)
             response = self.commands[command](parameters)
@@ -45,8 +46,11 @@ class Controller(WebSocketMessageHandler):
         except DeserializationError as e:
             self.logger.warning(f'received malformed message: {e}')
             response = str(e)
+        except Exception as e:
+            self.logger.warning(f'Unknown error: {e}')
+            response = str(e)
 
-        return serialize({'success': success, 'response': response})
+        return serialize({'command': command, 'success': success, 'response': response})
 
     async def run(self):
         self.logger.debug('Starting server')
@@ -78,9 +82,9 @@ class Controller(WebSocketMessageHandler):
             raise ControllerException(f'Error starting video: {e}')
 
         self.video_streamer.host_set(host, port)
-        return f'Video stream to {host}:{port} started'
+        return f'video started'
 
     def video_stop(self, _):
         self.logger.info(f'Stopping video')
         self.video_streamer.host_remove()
-        return 'Video stream stopped'
+        return 'video stopped'
