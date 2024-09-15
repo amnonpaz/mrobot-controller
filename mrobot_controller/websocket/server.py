@@ -33,11 +33,11 @@ class WebSocketServer:
 
     async def register(self, websocket):
         if self.client is not None:
-            await websocket.close(code=websockets.exceptions.ConnectionClosedError, reason="Only one client allowed")
-            self.logger.warning(f"Rejected connection from {websocket.remote_address}, already one client connected")
-        else:
-            self.client = websocket
-            self.logger.info(f"Client connected: {websocket.remote_address}")
+            await self.client.close(reason="Overriden. Only one client allowed.")
+            self.logger.warning(f"Closed connection to {websocket.remote_address} due to new client connecting")
+
+        self.client = websocket
+        self.logger.info(f"Client connected: {websocket.remote_address}")
 
     async def unregister(self, websocket):
         if self.client == websocket:
