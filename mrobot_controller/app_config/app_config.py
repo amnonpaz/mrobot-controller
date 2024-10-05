@@ -9,10 +9,8 @@ class AppConfig:
         self.config = {
             'video': {
                 'device': "/dev/video0",
-                'width': 1920,
-                'height': 1080,
-                'host': 'localhost',
-                'port': 5555,
+                'width': 640,
+                'height': 480,
                 'test': False
             },
             'app-server': {
@@ -58,6 +56,11 @@ class AppConfig:
             self.logger.info(line)
 
     def __repr__(self):
-        return (f'Video:\n    Device: {self.device}\n    Width:  {self.width}\n    Height: {self.height}\n    Test: {self.test}\n'
-                f'Server:\n    Port: {self.port}')
+        return (f'Video:\n'
+                f'    Device: {self.config['video']['device']}\n'
+                f'    Width:  {self.config['video']['width']}\n'
+                f'    Height: {self.config['video']['height']}\n'
+                f'    Test: {self.config['video']['test']}\n'
+                f'Server:\n'
+                f'    Port: {self.config['app-server']['port']}')
 
