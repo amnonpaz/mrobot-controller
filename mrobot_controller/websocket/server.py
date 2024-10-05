@@ -9,6 +9,10 @@ class WebSocketMessageHandler(ABC):
     async def handle_message(self, message):
         pass
 
+    @abstractmethod
+    async def on_client_disconnection(self):
+        pass
+
 
 class CatMessageHandler(WebSocketMessageHandler):
     def __init__(self):
@@ -16,6 +20,9 @@ class CatMessageHandler(WebSocketMessageHandler):
 
     async def handle_message(self, message):
         self.logger.info(f"Handling message: {message}")
+
+    async def on_client_disconnection(self):
+        self.logger.info('Client disconnected')
 
 
 class WebSocketServer:
@@ -43,8 +50,10 @@ class WebSocketServer:
         if self.client == websocket:
             self.logger.info(f"Client disconnected: {websocket.remote_address}")
             self.client = None
+            await self.message_handler.on_client_disconnection()
 
     async def send(self, message):
+        self.logger.info(f"Sending message to client")
         if self.client is not None:
             await self.client.send(message)
             self.logger.debug(f"Sent message to client: {message}")
@@ -57,7 +66,7 @@ class WebSocketServer:
             try:
                 async for message in websocket:
                     self.logger.debug(f"Received message: {message}")
-                    response = self.message_handler.handle_message(message)
+                    response = await self.message_handler.handle_message(message)
                     await websocket.send(response)
             except websockets.exceptions.ConnectionClosed as e:
                 self.logger.error(f"Connection closed: {websocket.remote_address} - {e}")

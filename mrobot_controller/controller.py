@@ -32,7 +32,7 @@ class Controller(WebSocketMessageHandler, VideoFrameHandler):
             'video_stop': self.video_stop
         }
 
-    def handle_message(self, message):
+    async def handle_message(self, message):
         success = False
         command = 'unknown'
         try:
