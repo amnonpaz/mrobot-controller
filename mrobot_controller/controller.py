@@ -29,7 +29,8 @@ class Controller(WebSocketMessageHandler, VideoFrameHandler):
 
         self.commands = {
             'video_start': self.video_start,
-            'video_stop': self.video_stop
+            'video_stop': self.video_stop,
+            'move': self.move
         }
 
     async def handle_message(self, message):
@@ -97,3 +98,6 @@ class Controller(WebSocketMessageHandler, VideoFrameHandler):
         self.logger.info(f'Stopping video')
         self.video_streamer.pause()
         return 'video stopped'
+
+    def move(self, parameters) -> str:
+        self.logger.info(f'Got move command: {parameters}')
