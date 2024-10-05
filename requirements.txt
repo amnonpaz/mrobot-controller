@@ -5,3 +5,4 @@ asyncio
 msgpack
 zeroconf
 netifaces
+pillow

@@ -1,7 +1,10 @@
-import socket
 import netifaces
 from zeroconf import ServiceInfo, Zeroconf
 import logging
+
+
+def get_all_ips():
+    return [netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr'] for iface in netifaces.interfaces() if netifaces.AF_INET in netifaces.ifaddresses(iface)]
 
 
 class ServicePublisher:
@@ -12,13 +15,12 @@ class ServicePublisher:
         self.service_name = f'_{service_name}._websocket._tcp.local.'
         self.port = port
 
-        all_ips = [netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr'] for iface in netifaces.interfaces() if netifaces.AF_INET in netifaces.ifaddresses(iface)]
-        self.local_ips = list(filter(lambda s: not s.startswith('127') and not s.startswith('172'), all_ips))
+        self.local_ips = list(filter(lambda s: not s.startswith('127') and not s.startswith('172'), get_all_ips()))
 
         self.info = ServiceInfo(
             '_websocket._tcp.local.',
             name=self.service_name,
-            addresses=self.local_ips, # socket.inet_aton(self.local_ips),
+            addresses=self.local_ips,
             port=port,
             properties={'path': '/ws'},
             server="websocket-server.local."

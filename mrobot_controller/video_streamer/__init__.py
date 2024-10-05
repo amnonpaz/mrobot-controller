@@ -1,1 +1,1 @@
-from .video_streamer import VideoStreamer
+from .video_streamer import VideoStreamer, VideoFrameHandler

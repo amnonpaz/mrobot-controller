@@ -1,26 +1,28 @@
 import asyncio
+import base64
 import logging
+import io
+from PIL import Image
 from .websocket import WebSocketServer, WebSocketMessageHandler
 from .serdes import deserialize, DeserializationError, serialize
-from .video_streamer import VideoStreamer
-from .dns_sd import ServicePublisher
+from .video_streamer import VideoStreamer, VideoFrameHandler
+from .dns_sd import ServicePublisher, get_all_ips
 
 
 class ControllerException(Exception):
     pass
 
 
-class Controller(WebSocketMessageHandler):
+class Controller(WebSocketMessageHandler, VideoFrameHandler):
     def __init__(self, port: int, video_config: dict):
         self.logger = logging.getLogger(self.__class__.__name__)
 
         self.service_publisher = ServicePublisher('mrobot-server', port)
-        self.websocket_server = WebSocketServer(self, hosts=self.service_publisher.get_ips(), port=port)
-        self.video_streamer = VideoStreamer(video_config['device'],
+        self.websocket_server = WebSocketServer(self, hosts=get_all_ips(), port=port)
+        self.video_streamer = VideoStreamer(self,
+                                            video_config['device'],
                                             video_config['width'],
                                             video_config['height'],
-                                            'localhost',
-                                            video_config['port'],
                                             video_config['test'])
         self.event_loop = None
         self.tasks = None
@@ -52,6 +54,22 @@ class Controller(WebSocketMessageHandler):
 
         return serialize({'command': command, 'success': success, 'response': response})
 
+    def handle_frame(self, raw_data, _):
+        self.logger.debug('Sending frame')
+
+        image = Image.frombytes("RGB", (640, 480), raw_data)
+
+        # Save image to a bytes buffer as PNG
+        buffered = io.BytesIO()
+        image.save(buffered, format="PNG")
+
+        # Get the image bytes and convert to Base64
+        img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+        serialized_message = serialize({'event': 'video_frame', 'payload': img_base64})
+
+        asyncio.run_coroutine_threadsafe(self.websocket_server.send(serialized_message), self.event_loop)
+
     async def run(self):
         self.logger.debug('Starting server')
 
@@ -71,20 +89,12 @@ class Controller(WebSocketMessageHandler):
         if self.tasks:
             self.tasks.cancel()
 
-    def video_start(self, parameters):
+    def video_start(self, _):
         self.logger.info(f'Starting video')
-
-        try:
-            host = parameters['host']
-            port = parameters['port']
-        except KeyError as e:
-            self.logger.warning(f'\"Start video\" parameters error: {e}')
-            raise ControllerException(f'Error starting video: {e}')
-
-        self.video_streamer.host_set(host, port)
+        self.video_streamer.play()
         return f'video started'
 
     def video_stop(self, _):
         self.logger.info(f'Stopping video')
-        self.video_streamer.host_remove()
+        self.video_streamer.pause()
         return 'video stopped'

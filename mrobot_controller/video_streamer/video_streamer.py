@@ -2,15 +2,21 @@ import gi
 import logging
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
+from abc import ABC, abstractmethod
+
+
+class VideoFrameHandler(ABC):
+    @abstractmethod
+    async def handle_frame(self, frame, size):
+        pass
 
 
 class VideoStreamer:
     def __init__(self,
+                 video_frame_handler: VideoFrameHandler,
                  device: str,
                  width: int,
                  height: int,
-                 host: str,
-                 port: int,
                  test: bool = False):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.pipeline = None
@@ -21,7 +27,8 @@ class VideoStreamer:
         Gst.init(None)
         self.logger.debug('GStreamer initialized')
 
-        self.create_elements(device, width, height, host, port, test)
+        self.video_frame_handler = video_frame_handler
+        self.create_elements(device, width, height, test)
         self.create_pipeline()
         self.add_elements()
         self.link_elements()
@@ -40,8 +47,6 @@ class VideoStreamer:
                         device: str,
                         width: int,
                         height: int,
-                        host: str,
-                        port: int,
                         test: bool = False):
         if not test:
             self.create_video_source(device, width, height)
@@ -49,20 +54,32 @@ class VideoStreamer:
             self.create_test_source(width, height)
 
         self.elements['h264parse'] = self.gst_element_create('h264parse', 'parser')
-        self.elements['rtph264pay'] = self.gst_element_create('rtph264pay', 'payloader')
-        self.elements['udpsink'] = self.gst_element_create('udpsink', 'sink')
+        self.elements['h264decoder'] = self.gst_element_create('avdec_h264', 'decoder')
+
+        self.elements['rgb_convert'] = self.gst_element_create('videoconvert', 'rgbconvert')
+        self.elements['rgb_capsfilter'] = self.gst_element_create('capsfilter', 'rgb_capsfilter')
+        self.gst_element_set_caps(self.elements['rgb_capsfilter'], f'video/x-raw,format=RGB,width={width},height={height}')
+
+        self.create_sink()
 
     def create_video_source(self, device: str, width: int, height: int):
+        self.logger.debug('Creating V4L source')
         self.elements['source'] = self.gst_element_create('v4l2src', 'source',
                                                           {'device': device})
         self.elements['capsfilter'] = self.gst_element_create('capsfilter', 'source-capsfilter')
         self.gst_element_set_caps(self.elements['capsfilter'], f'video/x-h264,width={width},height={height}')
 
     def create_test_source(self, width: int, height: int):
+        self.logger.debug('Creating test source')
         self.elements['source'] = self.gst_element_create('videotestsrc', 'source')
         self.elements['capsfilter'] = self.gst_element_create('capsfilter', 'source-capsfilter')
         self.gst_element_set_caps(self.elements['capsfilter'], f'video/x-raw,width={width},height={height}')
         self.elements['source-encoder'] = self.gst_element_create('x264enc', 'test-source-encoding')
+
+    def create_sink(self):
+        self.elements['sink'] = self.gst_element_create('appsink', 'sink')
+        self.elements['sink'].set_property('emit-signals', True)
+        self.elements['sink'].connect('new-sample', VideoStreamer.on_new_sample_callback, self)
 
     def add_elements(self):
         self.logger.debug('Adding elements to pipeline')
@@ -117,6 +134,30 @@ class VideoStreamer:
         element.set_property('caps', caps)
         self.logger.debug(f'- {element.get_name()}: Set caps to {caps.to_string()}')
 
+    @staticmethod
+    def on_new_sample_callback(_, userdata):
+        video_streamer_obj: VideoStreamer = userdata
+        return video_streamer_obj.handle_sample()
+
+    def handle_sample(self):
+        sample = self.elements['sink'].emit('pull-sample')
+        if not sample:
+            return Gst.FlowReturn.ERROR
+
+        try:
+            buffer = sample.get_buffer()
+            success, map_info = buffer.map(Gst.MapFlags.READ)
+            if success:
+                self.logger.debug('Passing new frame')
+                raw_data = map_info.data
+                self.video_frame_handler.handle_frame(raw_data, len(raw_data))
+        except Exception as e:
+            self.logger.warning(f'Error while reading video buffer: {e}')
+        finally:
+            buffer.unmap(map_info)
+
+        return Gst.FlowReturn.OK
+
     def on_message(self, bus, message):
         res = True
         msg_type = message.type
@@ -155,17 +196,6 @@ class VideoStreamer:
             self.pipeline.recalculate_latency()
 
         return res
-
-    def host_set(self, host: str, port: int):
-        self.pause()
-        self.logger.info(f'Streaming to server on {host}:{port}')
-        self.elements['udpsink'].emit('add', host, port)
-        self.play()
-
-    def host_remove(self):
-        self.pause()
-        self.logger.info('removing hosts')
-        self.elements['udpsink'].emit('clear')
 
     async def start(self):
         # Start playing the pipeline
