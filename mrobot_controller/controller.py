@@ -54,24 +54,23 @@ class Controller(WebSocketMessageHandler, VideoFrameHandler):
 
         return serialize({'command': command, 'success': success, 'response': response})
 
+    async def on_client_disconnection(self):
+        self.logger.info(f'Client disconnected, stopping video')
+        self.video_streamer.pause()
+
     def handle_frame(self, raw_data, _):
         self.logger.debug('Sending frame')
 
         image = Image.frombytes("RGB", (640, 480), raw_data)
-
-        # Save image to a bytes buffer as PNG
         buffered = io.BytesIO()
         image.save(buffered, format="PNG")
-
-        # Get the image bytes and convert to Base64
         img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
         serialized_message = serialize({'event': 'video_frame', 'payload': img_base64})
-
         asyncio.run_coroutine_threadsafe(self.websocket_server.send(serialized_message), self.event_loop)
 
-    async def run(self):
-        self.logger.debug('Starting server')
+    async def run(self) -> None:
+        self.logger.info('Starting server')
 
         self.service_publisher.publish()
 
@@ -81,7 +80,7 @@ class Controller(WebSocketMessageHandler, VideoFrameHandler):
             asyncio.create_task(self.websocket_server.start())
         )
 
-    def stop(self):
+    def stop(self) -> None:
         if self.service_publisher:
             self.service_publisher.unpublish()
         if self.video_streamer:
@@ -89,12 +88,12 @@ class Controller(WebSocketMessageHandler, VideoFrameHandler):
         if self.tasks:
             self.tasks.cancel()
 
-    def video_start(self, _):
+    def video_start(self, _) -> str:
         self.logger.info(f'Starting video')
         self.video_streamer.play()
         return f'video started'
 
-    def video_stop(self, _):
+    def video_stop(self, _) -> str:
         self.logger.info(f'Stopping video')
         self.video_streamer.pause()
         return 'video stopped'
