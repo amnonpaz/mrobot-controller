@@ -53,7 +53,6 @@ class WebSocketServer:
             await self.message_handler.on_client_disconnection()
 
     async def send(self, message):
-        self.logger.info(f"Sending message to client")
         if self.client is not None:
             await self.client.send(message)
             self.logger.debug(f"Sent message to client: {message}")
