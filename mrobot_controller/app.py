@@ -27,7 +27,7 @@ def main():
     # Load configuration from JSON file
     config = AppConfig(args.config)
 
-    controller = Controller(config.get_app_server_config()['port'], config.get_video_config())
+    controller = Controller(config.get_server_config()['port'], config.get_video_config())
     try:
         # Initialize and start the VideoStreamer with the configuration
         logger.info("Starting controller...")

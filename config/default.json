@@ -1,11 +1,17 @@
 {
     "video": {
+        "device": "/dev/video0",
         "width": 640,
         "height": 480,
-        "device": "/dev/video0",
         "test": true
     },
-    "app-server": {
+    "server": {
         "port": 8877
+    },
+    "motors": {
+      "l0": { "chip_id": 0, "channel_id": 0 },
+      "l1": { "chip_id": 0, "channel_id": 1 },
+      "r0": { "chip_id": 1, "channel_id": 0 },
+      "r1": { "chip_id": 1, "channel_id": 1 }
     }
 }

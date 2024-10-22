@@ -6,3 +6,4 @@ msgpack
 zeroconf
 netifaces
 pillow
+jsonschema

@@ -1,0 +1,60 @@
+{
+  "type": "object",
+  "properties": {
+    "video": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "test": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "device",
+        "width",
+        "height",
+        "test"
+      ]
+    },
+    "server": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "port"
+      ]
+    },
+    "motors": {
+      "type": "object",
+      "minProperties": 4,
+      "maxProperties": 4,
+      "patternProperties": {
+        "^(l|r)[01]$": {
+          "type": "object",
+          "properties": {
+            "chip_id": { "type": "integer" },
+            "channel_id": { "type": "integer" }
+          },
+          "required": ["chip_id", "channel_id"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "video",
+    "server",
+    "motors"
+  ]
+}
