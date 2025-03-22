@@ -24,7 +24,8 @@ class Controller(WebSocketMessageHandler, VideoFrameHandler):
                                             video_config['device'],
                                             video_config['width'],
                                             video_config['height'],
-                                            video_config['test'])
+                                            video_config['test'],
+                                            'intel')
         self.event_loop = None
         self.tasks = None
 

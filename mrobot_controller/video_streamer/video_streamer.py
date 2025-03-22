@@ -17,7 +17,8 @@ class VideoStreamer:
                  device: str,
                  width: int,
                  height: int,
-                 test: bool = False):
+                 test: bool = False,
+                 processor: str | None = None):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.INFO)
         self.pipeline = None
@@ -29,7 +30,7 @@ class VideoStreamer:
         self.logger.debug('GStreamer initialized')
 
         self.video_frame_handler = video_frame_handler
-        self.create_elements(device, width, height, test)
+        self.create_elements(device, width, height, test, processor)
         self.create_pipeline()
         self.add_elements()
         self.link_elements()
@@ -48,24 +49,21 @@ class VideoStreamer:
                         device: str,
                         width: int,
                         height: int,
-                        test: bool = False):
+                        test: bool,
+                        processor: str | None):
+        self.create_video_source(device, width, height, test)
+        self.create_queue()
+        self.create_jpeg_decoder(processor)
+        self.create_rgb_convert(width, height)
+        self.create_sink()
+
+    def create_video_source(self, device: str, width: int, height: int, test: bool):
         if not test:
-            self.create_video_source(device, width, height)
+            self.create_v4l_source(device, width, height)
         else:
             self.create_test_source(width, height)
 
-        self.elements['queue'] = self.gst_element_create('queue', 'queue')
-        self.elements['queue'].set_property('max-size-buffers', 1)
-        self.elements['queue'].set_property('leaky', 2)
-
-        self.elements['jpeg_decocder'] = self.gst_element_create('jpegdec', 'jpeg_decoder')
-        self.elements['rgb_convert'] = self.gst_element_create('videoconvert', 'rgbconvert')
-        self.elements['rgb_capsfilter'] = self.gst_element_create('capsfilter', 'rgb_capsfilter')
-        self.gst_element_set_caps(self.elements['rgb_capsfilter'], f'video/x-raw,format=RGB,width={width},height={height}')
-
-        self.create_sink()
-
-    def create_video_source(self, device: str, width: int, height: int):
+    def create_v4l_source(self, device: str, width: int, height: int):
         self.logger.debug('Creating V4L source')
         self.elements['source'] = self.gst_element_create('v4l2src', 'source',
                                                           {'device': device})
@@ -78,6 +76,27 @@ class VideoStreamer:
         self.elements['capsfilter'] = self.gst_element_create('capsfilter', 'source-capsfilter')
         self.gst_element_set_caps(self.elements['capsfilter'], f'video/x-raw,width={width},height={height}')
         self.elements['jpeg_encoder'] = self.gst_element_create('jpegenc', 'test-source-encoding')
+
+    def create_queue(self):
+        self.elements['queue'] = self.gst_element_create('queue', 'queue')
+        self.elements['queue'].set_property('max-size-buffers', 1)
+        self.elements['queue'].set_property('leaky', 2)
+
+    def create_rgb_convert(self, width: int, height: int):
+        self.elements['rgb_convert'] = self.gst_element_create('videoconvert', 'rgbconvert')
+        self.elements['rgb_capsfilter'] = self.gst_element_create('capsfilter', 'rgb_capsfilter')
+        self.gst_element_set_caps(self.elements['rgb_capsfilter'], f'video/x-raw,format=RGB,width={width},height={height}')
+
+    def create_jpeg_decoder(self, processor: str | None):
+        if processor == 'intel':
+            self.logger.info('Using Intel HW JPEG decoder')
+            self.elements['jpeg_decoder'] = self.gst_element_create('vaapijpegdec', 'jpeg_decoder')
+        elif processor == 'arm':
+            self.logger.info('Using ARM HW JPEG decoder')
+            self.elements['jpeg_decoder'] = self.gst_element_create('v4l2jpegdec', 'jpeg_decoder')
+        else:
+            self.logger.info('Using software JPEG decoder')
+            self.elements['jpeg_decoder'] = self.gst_element_create('jpegdec', 'jpeg_decoder')
 
     def create_sink(self):
         self.elements['sink'] = self.gst_element_create('appsink', 'sink')
