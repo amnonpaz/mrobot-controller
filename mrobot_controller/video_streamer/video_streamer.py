@@ -19,6 +19,7 @@ class VideoStreamer:
                  height: int,
                  test: bool = False):
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(logging.INFO)
         self.pipeline = None
         self.elements = {}
         self.bus = None
@@ -53,9 +54,11 @@ class VideoStreamer:
         else:
             self.create_test_source(width, height)
 
-        self.elements['h264parse'] = self.gst_element_create('h264parse', 'parser')
-        self.elements['h264decoder'] = self.gst_element_create('avdec_h264', 'decoder')
+        self.elements['queue'] = self.gst_element_create('queue', 'queue')
+        self.elements['queue'].set_property('max-size-buffers', 1)
+        self.elements['queue'].set_property('leaky', 2)
 
+        self.elements['jpeg_decocder'] = self.gst_element_create('jpegdec', 'jpeg_decoder')
         self.elements['rgb_convert'] = self.gst_element_create('videoconvert', 'rgbconvert')
         self.elements['rgb_capsfilter'] = self.gst_element_create('capsfilter', 'rgb_capsfilter')
         self.gst_element_set_caps(self.elements['rgb_capsfilter'], f'video/x-raw,format=RGB,width={width},height={height}')
@@ -67,14 +70,14 @@ class VideoStreamer:
         self.elements['source'] = self.gst_element_create('v4l2src', 'source',
                                                           {'device': device})
         self.elements['capsfilter'] = self.gst_element_create('capsfilter', 'source-capsfilter')
-        self.gst_element_set_caps(self.elements['capsfilter'], f'video/x-h264,width={width},height={height}')
+        self.gst_element_set_caps(self.elements['capsfilter'], f'image/jpeg,width={width},height={height}')
 
     def create_test_source(self, width: int, height: int):
         self.logger.debug('Creating test source')
         self.elements['source'] = self.gst_element_create('videotestsrc', 'source')
         self.elements['capsfilter'] = self.gst_element_create('capsfilter', 'source-capsfilter')
         self.gst_element_set_caps(self.elements['capsfilter'], f'video/x-raw,width={width},height={height}')
-        self.elements['source-encoder'] = self.gst_element_create('x264enc', 'test-source-encoding')
+        self.elements['jpeg_encoder'] = self.gst_element_create('jpegenc', 'test-source-encoding')
 
     def create_sink(self):
         self.elements['sink'] = self.gst_element_create('appsink', 'sink')
