@@ -59,7 +59,7 @@ class WebSocketServer:
         else:
             self.logger.warning("No client connected to send the message to")
 
-    async def serve(self, websocket, path):
+    async def serve(self, websocket):
         await self.register(websocket)
         if self.client is websocket:
             try:
