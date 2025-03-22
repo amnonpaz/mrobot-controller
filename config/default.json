@@ -1,4 +1,7 @@
 {
+    "platform": {
+        "processor": "intel"
+    },
     "video": {
         "device": "/dev/video0",
         "width": 640,

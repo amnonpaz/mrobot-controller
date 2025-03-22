@@ -1,6 +1,17 @@
 {
   "type": "object",
   "properties": {
+    "platform": {
+      "type": "object",
+      "processor": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "processor"
+      ]
+    },
     "video": {
       "type": "object",
       "properties": {
@@ -53,6 +64,7 @@
     }
   },
   "required": [
+    "platform",
     "video",
     "server",
     "motors"

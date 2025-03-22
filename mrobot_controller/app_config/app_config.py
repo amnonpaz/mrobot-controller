@@ -32,6 +32,9 @@ class AppConfig:
     def get_server_config(self):
         return self.configuration['server']
 
+    def get_platform_config(self):
+        return self.configuration['platform']
+
     def log_values(self):
         self.logger.info('Using configuration: ')
         for line in str(self).split('\n'):

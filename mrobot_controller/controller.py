@@ -14,7 +14,7 @@ class ControllerException(Exception):
 
 
 class Controller(WebSocketMessageHandler, VideoFrameHandler):
-    def __init__(self, port: int, video_config: dict, log_level: int = logging.INFO):
+    def __init__(self, port: int, video_config: dict, processor: str = "none", log_level: int = logging.INFO):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)
 
@@ -25,7 +25,7 @@ class Controller(WebSocketMessageHandler, VideoFrameHandler):
                                             video_config['width'],
                                             video_config['height'],
                                             video_config['test'],
-                                            'intel')
+                                            processor)
         self.event_loop = None
         self.tasks = None
 
