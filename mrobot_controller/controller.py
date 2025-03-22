@@ -14,8 +14,9 @@ class ControllerException(Exception):
 
 
 class Controller(WebSocketMessageHandler, VideoFrameHandler):
-    def __init__(self, port: int, video_config: dict):
+    def __init__(self, port: int, video_config: dict, log_level: int = logging.INFO):
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(log_level)
 
         self.service_publisher = ServicePublisher('mrobot-server', port)
         self.websocket_server = WebSocketServer(self, hosts=get_all_ips(), port=port)
